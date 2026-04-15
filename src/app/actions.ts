@@ -4,7 +4,6 @@
 import { z } from "zod";
 import { ptwSchema, type PtwFormValues } from "@/lib/schema";
 import type { Permit, PermitStatus } from "@/lib/constants";
-import { analyzeRejectionRemarks } from "@/ai/flows/analyze-rejection-remarks";
 import { db, storage } from "@/lib/firebase";
 import { collection, addDoc, getDocs, query, where, doc, getDoc, updateDoc, serverTimestamp, orderBy, Timestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, StorageError } from "firebase/storage";
@@ -294,7 +293,11 @@ export async function updatePermitStatus(token: string, status: "Approved" | "Re
             updateData.rejectionRemarks = remarks;
              try {
                 const formDetails = JSON.stringify(permitData.data, null, 2);
-                const aiResponse = await analyzeRejectionRemarks({ formDetails, rejectionRemarks: remarks! });
+                const { analyzeRejectionRemarks } = await import("@/ai/flows/analyze-rejection-remarks");
+                const aiResponse = await analyzeRejectionRemarks({
+                  formDetails,
+                  rejectionRemarks: remarks!,
+                });
                 console.log("AI Suggested Corrections:", aiResponse.suggestedCorrections);
                 updateData.aiSuggestions = aiResponse.suggestedCorrections;
                 aiSuggestions = aiResponse.suggestedCorrections;
